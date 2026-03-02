@@ -1,0 +1,35 @@
+# 민감 정보
+docs/credentials.md
+
+# 임시 파일
+~$*
+*.tmp
+*.bak
+
+# OS
+desktop.ini
+Thumbs.db
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# IDE
+.vscode/
+*.code-workspace
+
+# Claude
+.claude/settings.local.json
+
+# 생성된 출력물 (대용량)
+output/**/*.pptx
+output/**/*.pdf
+!output/.gitkeep
+
+# 템플릿 바이너리
+templates/*.pptx
+!templates/.gitkeep
