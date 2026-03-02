@@ -8,7 +8,7 @@
 """
 from pptx.util import Inches, Pt, Emu
 from pptx.enum.shapes import MSO_SHAPE
-from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
+from pptx.enum.text import PP_ALIGN, MSO_ANCHOR, MSO_AUTO_SIZE
 from pptx.oxml.ns import qn
 
 from .colors import (
@@ -51,7 +51,8 @@ def add_header_bar(slide, section_title="", section_english=""):
             Inches(8.0), Inches(0.55),
         )
         tf = txbox.text_frame
-        tf.word_wrap = True
+        tf.auto_size = MSO_AUTO_SIZE.SHAPE_TO_FIT_TEXT
+        tf.word_wrap = False
         tf.paragraphs[0].space_before = Pt(0)
         tf.paragraphs[0].space_after = Pt(0)
 
@@ -117,6 +118,7 @@ def add_logo(slide):
         LOGO_WIDTH, Inches(0.42),
     )
     tf = txbox.text_frame
+    tf.auto_size = MSO_AUTO_SIZE.SHAPE_TO_FIT_TEXT
     tf.word_wrap = False
     p = tf.paragraphs[0]
     p.alignment = PP_ALIGN.RIGHT
@@ -139,6 +141,8 @@ def add_slide_number(slide, number, total=None):
         Inches(0.9), Inches(0.3),
     )
     tf = txbox.text_frame
+    tf.auto_size = MSO_AUTO_SIZE.SHAPE_TO_FIT_TEXT
+    tf.word_wrap = False
     p = tf.paragraphs[0]
     p.alignment = PP_ALIGN.RIGHT
 
@@ -166,6 +170,8 @@ def add_bottom_accent(slide):
         Inches(3.0), Inches(0.3),
     )
     tf = txbox.text_frame
+    tf.auto_size = MSO_AUTO_SIZE.SHAPE_TO_FIT_TEXT
+    tf.word_wrap = False
     p = tf.paragraphs[0]
     run = p.add_run()
     run.text = "AIsirius Co., Ltd.  |  Confidential"

@@ -26,7 +26,7 @@ sys.path.insert(0, SCRIPT_DIR)
 
 from pptx import Presentation
 from pptx.util import Inches, Pt, Emu
-from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
+from pptx.enum.text import PP_ALIGN, MSO_ANCHOR, MSO_AUTO_SIZE
 from pptx.enum.shapes import MSO_SHAPE
 from pptx.dml.color import RGBColor
 
@@ -36,14 +36,14 @@ from components.colors import (
     MUTED_TEAL, LIME_GREEN, TABLE_HEADER_BG, TABLE_HEADER_FG,
     TABLE_ALT_ROW, TABLE_BODY_FG,
 )
-from components.fonts import apply_font
+from components.fonts import apply_font, FONT_ROLES
 from components.layouts import (
     SLIDE_WIDTH, SLIDE_HEIGHT,
     CONTENT_LEFT, CONTENT_TOP, CONTENT_WIDTH, CONTENT_HEIGHT,
     A_TEXT_LEFT, A_TEXT_WIDTH, A_IMAGE_LEFT, A_IMAGE_WIDTH,
     B_TEXT_LEFT, B_TEXT_WIDTH, B_IMAGE_LEFT, B_IMAGE_WIDTH,
     CHART_3_WIDTH, CHART_3_HEIGHT, CHART_3_POSITIONS,
-    CHART_SINGLE_LEFT, CHART_SINGLE_TOP, CHART_SINGLE_WIDTH, CHART_SINGLE_HEIGHT,
+    CHART_SINGLE_LEFT, CHART_SINGLE_WIDTH, CHART_SINGLE_HEIGHT,
     PILLAR_WIDTH, PILLAR_HEIGHT, PILLAR_GAP, PILLAR_POSITIONS,
     LayoutType,
 )
@@ -60,40 +60,77 @@ TEMPLATES_DIR = os.path.join(PROJECT_ROOT, "templates")
 CONTENT_DIR = os.path.join(PROJECT_ROOT, "docs", "content")
 OUTPUT_DIR = os.path.join(PROJECT_ROOT, "output", "회사소개서")
 ASSETS_DIR = os.path.join(PROJECT_ROOT, "assets")
+# ── 슬라이드별 이미지 매핑 (슬라이드 번호 → 상대 경로) ──
+# 경로는 assets/ 기준 (ASSETS_DIR 아래)
+IMAGE_MAP_A = {
+    2: "infographics/concepts/ai-store-aisle-futuristic-brain-light.png",
+    3: "infographics/diagrams/retail-customer-journey-dx-ax-interaction.png",
+    5: "images/stores/digital-shelf-lcd-beverage-campaign.webp",
+    6: "images/products/esl-epd-tag-pharmacy-closeup.jpg",
+    8: "images/backgrounds/futuristic-retail-corridor-blue-wave.png",
+    9: "infographics/concepts/ai-supermarket-aisle-data-overlay.png",
+    10: "infographics/concepts/ai-store-aisle-futuristic-brain-warm.png",
+    # 11-12: 멀티모달 신규 슬라이드 (이미지 미지정)
+    14: "infographics/diagrams/platform-architecture-lcd-ai-engine.png",       # was 12
+    15: "infographics/screenshots/cms-main-dashboard-map-realtime.png",        # was 13
+    16: "infographics/diagrams/store-isometric-floorplan-device-layout.png",   # was 14
+    17: "infographics/diagrams/business-evolution-timeline-hw-sw-ai.png",      # was 15
+    18: "images/products/stretched-lcd-content-display-wide.png",              # was 16
+    21: "images/backgrounds/dark-blue-digital-circuit-pattern.jpg",            # was 19
+    23: "images/people/gyeonggi-rndb-center-aerial-view.png",                 # was 21
+    24: "images/stores/supermarket-aisle-interior-blurred.png",                # was 22
+}
+
+IMAGE_MAP_B = {
+    3: "infographics/diagrams/retail-customer-journey-dx-ax-interaction.png",
+    7: "images/stores/digital-shelf-lcd-gondola-snack-promo.webp",
+    11: "images/backgrounds/futuristic-retail-corridor-blue-wave.png",
+    12: "infographics/screenshots/cms-main-dashboard-map-realtime.png",
+    13: "infographics/screenshots/cms-device-status-by-store-chart.png",
+    14: "infographics/concepts/ai-supermarket-aisle-data-overlay.png",
+    # 15-16: 멀티모달 신규 슬라이드 (이미지 미지정)
+    17: "infographics/diagrams/store-isometric-floorplan-device-layout.png",   # was 15
+    19: "infographics/diagrams/business-evolution-timeline-hw-sw-ai.png",      # was 17
+    22: "images/backgrounds/dark-blue-digital-circuit-pattern.jpg",            # was 20
+    25: "images/stores/supermarket-aisle-interior-blurred.png",                # was 23
+    27: "images/people/gyeonggi-rndb-center-aerial-view.png",                 # was 25
+}
 
 
 # ── 섹션 매핑 (슬라이드 번호 → 섹션 정보) ────────────
 SECTION_MAP_A = {
-    1: ("", ""),
-    2: ("AIsirius 소개", "About AIsirius"),
-    3: ("시장 기회", "Marketing Opportunity"),
-    4: ("시장 기회", "Expected Outcomes and Target Market"),
-    5: ("시장 기회", "Retail Business Strategies"),
-    6: ("시장 기회", "Expected Outcomes and Target Market"),
-    7: ("AIsirius AI", "Core AI Technology"),
-    8: ("AIsirius AI", "Core AI Technology"),
-    9: ("AIsirius AI", "AI Content Generation"),
-    10: ("AIsirius AI", "AI Store Analysis"),
-    11: ("AIsirius AI", "3-Stage Distributed AI"),
-    12: ("플랫폼", "Platform Architecture"),
-    13: ("플랫폼", "CMS Features"),
-    14: ("플랫폼", "Cross-Device Integration"),
-    15: ("플랫폼", "HW Lineup"),
-    16: ("플랫폼", "Device Absorption"),
-    17: ("비즈니스", "Business Model"),
-    18: ("비즈니스", "ROI Analysis"),
-    19: ("비즈니스", "Global Strategy"),
-    20: ("비즈니스", "Revenue Roadmap"),
-    21: ("팀", "About AIsirius"),
-    22: ("팀", "Traction"),
-    23: ("팀", "ESG"),
-    24: ("", ""),
-    25: ("부록", "Appendix"),
+    1: ("", ""),                                            # 표지
+    2: ("AIsirius 소개", "About AIsirius"),                  # 한 줄 정의
+    3: ("시장 기회", "Marketing Opportunity"),                # DX→AX
+    4: ("시장 기회", "Expected Outcomes and Target Market"),  # 글로벌 시장 규모
+    5: ("시장 기회", "Retail Business Strategies"),           # 월마트 사례
+    6: ("시장 기회", "Expected Outcomes and Target Market"),  # ESL 교체 시점
+    7: ("AIsirius AI", "Core AI Technology"),                # 리테일 전문 AI
+    8: ("AIsirius AI", "Core AI Technology"),                # 전용 AI vs 범용 AI
+    9: ("AIsirius AI", "AI Content Generation"),             # AI 콘텐츠 자동 생성
+    10: ("AIsirius AI", "AI Store Analysis"),                # AI 매장 분석
+    11: ("AIsirius AI", "Multi-Modal AI Pipeline"),          # 멀티모달 파이프라인 (신규)
+    12: ("AIsirius AI", "Multi-Modal AI Services"),          # 멀티모달 서비스 시나리오 (신규)
+    13: ("AIsirius AI", "3-Stage Distributed AI"),           # 3단 분산 AI
+    14: ("플랫폼", "Platform Architecture"),                  # 리테일 미디어 플랫폼
+    15: ("플랫폼", "CMS Features"),                          # CMS 주요 기능
+    16: ("플랫폼", "Cross-Device Integration"),               # 크로스 디바이스
+    17: ("플랫폼", "HW Lineup"),                             # HW 라인업
+    18: ("플랫폼", "Device Absorption"),                     # 기존 기기 흡수력
+    19: ("비즈니스", "Business Model"),                       # 하이브리드 수익 모델
+    20: ("비즈니스", "ROI Analysis"),                         # ROI 분석
+    21: ("비즈니스", "Global Strategy"),                      # 글로벌 전략
+    22: ("비즈니스", "Revenue Roadmap"),                      # J-Curve 성장
+    23: ("팀", "About AIsirius"),                            # CEO & 팀
+    24: ("팀", "Traction"),                                  # 국내 트랙션
+    25: ("팀", "ESG"),                                       # ESG
+    26: ("", ""),                                            # 감사합니다
+    27: ("부록", "Appendix"),                                # 부록
 }
 
 SECTION_MAP_B = {
     1: ("", ""),                                             # 표지
-    2: ("AIsirius 소개", "Company Definition"),               # 한 줄 정의 (신규)
+    2: ("AIsirius 소개", "Company Definition"),               # 한 줄 정의
     3: ("시장 기회", "Marketing Opportunity"),                 # DX→AX
     4: ("시장 기회", "Marketing Opportunity"),                 # AX 비즈니스 기회
     5: ("시장 기회", "Expected Outcomes and Target Market"),   # 글로벌 시장 규모
@@ -106,21 +143,23 @@ SECTION_MAP_B = {
     12: ("플랫폼", "CMS Platform"),                           # CMS 기능 1/2
     13: ("플랫폼", "CMS Platform"),                           # CMS 기능 2/2
     14: ("AI 기술", "AI Content Generation"),                  # AI 콘텐츠 자동 생성
-    15: ("플랫폼", "Cross-Device Integration"),                # 크로스 디바이스
-    16: ("AI 기술", "3-Stage Distributed AI"),                 # 3단 분산 AI
-    17: ("플랫폼", "HW Lineup"),                              # HW 라인업
-    18: ("비즈니스", "Revenue Model"),                         # 수익 모델
-    19: ("비즈니스", "ROI Analysis"),                          # ROI 분석
-    20: ("비즈니스", "Global Strategy"),                       # 글로벌 전략
-    21: ("비즈니스", "Revenue Roadmap"),                       # J-Curve
-    22: ("비즈니스", "Expansion Vision"),                      # 통합 솔루션 확장
-    23: ("팀", "Traction"),                                   # 국내 트랙션
-    24: ("팀", "ESG"),                                        # ESG
-    25: ("팀", "About AIsirius"),                             # CEO & 팀
-    26: ("", ""),                                             # 감사합니다
-    27: ("부록", "Appendix"),                                 # 부록 1
-    28: ("부록", "Appendix"),                                 # 부록 2
-    29: ("부록", "Appendix"),                                 # 부록 3
+    15: ("AI 기술", "Multi-Modal AI Pipeline"),                # 멀티모달 파이프라인 (신규)
+    16: ("AI 기술", "Multi-Modal AI Services"),                # 멀티모달 서비스 시나리오 (신규)
+    17: ("플랫폼", "Cross-Device Integration"),                # 크로스 디바이스
+    18: ("AI 기술", "3-Stage Distributed AI"),                 # 3단 분산 AI
+    19: ("플랫폼", "HW Lineup"),                              # HW 라인업
+    20: ("비즈니스", "Revenue Model"),                         # 수익 모델
+    21: ("비즈니스", "ROI Analysis"),                          # ROI 분석
+    22: ("비즈니스", "Global Strategy"),                       # 글로벌 전략
+    23: ("비즈니스", "Revenue Roadmap"),                       # J-Curve
+    24: ("비즈니스", "Expansion Vision"),                      # 통합 솔루션 확장
+    25: ("팀", "Traction"),                                   # 국내 트랙션
+    26: ("팀", "ESG"),                                        # ESG
+    27: ("팀", "About AIsirius"),                             # CEO & 팀
+    28: ("", ""),                                             # 감사합니다
+    29: ("부록", "Appendix"),                                 # 부록 1
+    30: ("부록", "Appendix"),                                 # 부록 2
+    31: ("부록", "Appendix"),                                 # 부록 3
 }
 
 
@@ -128,38 +167,166 @@ SECTION_MAP_B = {
 #  레이아웃 빌더 함수들
 # ══════════════════════════════════════════════════════
 
+def _get_font_pt(font_role, override_size=None):
+    """폰트 역할에서 pt 크기 반환."""
+    if override_size:
+        return override_size / 12700
+    cfg = FONT_ROLES.get(font_role, {})
+    return cfg.get("size", Pt(14)) / 12700
+
+
+def _wrap_text_to_lines(text, font_pt, box_width_pt):
+    """텍스트를 박스 너비에 맞게 줄바꿈 (Enter로 분리).
+
+    - 한글/CJK ≈ font_pt 너비
+    - Latin/숫자 ≈ font_pt * 0.55 너비
+    - **Bold** 마커는 너비 0 (출력에 포함)
+    - 공백/구두점 기준으로 줄바꿈
+    """
+    if not text:
+        return [""]
+
+    result_lines = []
+
+    for segment in text.split('\n'):
+        if not segment.strip():
+            result_lines.append("")
+            continue
+
+        current_line = ""
+        current_width = 0
+        i = 0
+
+        while i < len(segment):
+            # ** marker: 출력에 포함하되 너비 0
+            if i + 1 < len(segment) and segment[i:i+2] == '**':
+                current_line += '**'
+                i += 2
+                continue
+
+            char = segment[i]
+
+            # 글자 너비 추정
+            if '\uAC00' <= char <= '\uD7A3' or '\u4E00' <= char <= '\u9FFF':
+                cw = font_pt
+            else:
+                cw = font_pt * 0.55
+
+            if current_width + cw > box_width_pt and current_line:
+                # 줄바꿈 위치 탐색 (공백/구두점 우선)
+                bp = -1
+                search_start = max(0, len(current_line) - 35)
+                for j in range(len(current_line) - 1, search_start, -1):
+                    c = current_line[j]
+                    if c == '*':
+                        continue
+                    if c in ' ,，.。、·—–\u2013-/':
+                        bp = j + 1
+                        break
+
+                if bp > 0:
+                    left_part = current_line[:bp].rstrip()
+                    right_part = current_line[bp:].lstrip()
+                else:
+                    left_part = current_line
+                    right_part = ""
+
+                # ** 마커 균형 맞추기 (줄 중간에서 Bold가 잘리면)
+                if left_part.count('**') % 2 == 1:
+                    left_part += '**'
+                    right_part = '**' + right_part
+
+                result_lines.append(left_part)
+                current_line = right_part + char
+                # 잔여 줄 너비 재계산
+                clean = re.sub(r'\*\*', '', current_line)
+                current_width = sum(
+                    font_pt if ('\uAC00' <= c <= '\uD7A3' or '\u4E00' <= c <= '\u9FFF')
+                    else font_pt * 0.55
+                    for c in clean
+                )
+            else:
+                current_line += char
+                current_width += cw
+            i += 1
+
+        if current_line:
+            result_lines.append(current_line)
+
+    return result_lines if result_lines else [""]
+
+
 def _add_text_box(slide, left, top, width, height, text, font_role,
-                  color=None, alignment=PP_ALIGN.LEFT, word_wrap=True,
+                  color=None, alignment=PP_ALIGN.LEFT, word_wrap=False,
                   override_size=None):
-    """텍스트박스를 추가하고 폰트를 적용하는 헬퍼."""
+    """텍스트박스를 추가하고 폰트를 적용하는 헬퍼.
+
+    기본: 도형을 텍스트 크기에 맞춤 + 자동 줄바꿈 OFF.
+    텍스트가 박스 너비를 초과하면 자동으로 Enter(새 문단) 삽입.
+    """
     txbox = slide.shapes.add_textbox(left, top, width, height)
     tf = txbox.text_frame
+    tf.auto_size = MSO_AUTO_SIZE.SHAPE_TO_FIT_TEXT
     tf.word_wrap = word_wrap
-    p = tf.paragraphs[0]
-    p.alignment = alignment
-    run = p.add_run()
-    run.text = text
-    apply_font(run, font_role, color=color, override_size=override_size)
+
+    # 박스 너비에 맞게 줄바꿈
+    font_pt = _get_font_pt(font_role, override_size)
+    box_width_pt = width / 12700
+    lines = _wrap_text_to_lines(text, font_pt, box_width_pt)
+
+    for i, line in enumerate(lines):
+        if i == 0:
+            p = tf.paragraphs[0]
+        else:
+            p = tf.add_paragraph()
+        p.alignment = alignment
+        run = p.add_run()
+        run.text = line
+        apply_font(run, font_role, color=color, override_size=override_size)
     return txbox
 
 
 def _add_bullet_list(slide, left, top, width, height, items, font_role,
                      color=None, spacing=Pt(4)):
-    """불릿 리스트 텍스트박스 추가."""
+    """불릿 리스트 텍스트박스 추가.
+
+    기본: 도형을 텍스트 크기에 맞춤 + 자동 줄바꿈 OFF.
+    각 불릿 항목을 박스 너비에 맞게 줄바꿈(Enter) 처리.
+    height가 지정되면 최대 줄 수를 계산하여 초과분을 잘라냄.
+    """
     txbox = slide.shapes.add_textbox(left, top, width, height)
     tf = txbox.text_frame
-    tf.word_wrap = True
+    tf.auto_size = MSO_AUTO_SIZE.SHAPE_TO_FIT_TEXT
+    tf.word_wrap = False
 
-    for i, item in enumerate(items):
-        if i == 0:
+    font_pt = _get_font_pt(font_role)
+    box_width_pt = width / 12700
+
+    # 높이 기반 최대 줄 수 계산 (줄 높이 ≈ font_pt * 1.33 + spacing)
+    line_height_pt = font_pt * 1.33
+    max_lines = int((height / 12700) / line_height_pt) if height > 0 else 9999
+
+    # 모든 항목을 먼저 줄바꿈해서 전체 줄 목록 생성
+    all_lines = []  # (line_text, is_first_of_item, is_last_of_item)
+    for item in items:
+        lines = _wrap_text_to_lines(item, font_pt, box_width_pt)
+        for li, line in enumerate(lines):
+            all_lines.append((line, li == 0, li == len(lines) - 1))
+    if len(all_lines) > max_lines:
+        all_lines = all_lines[:max_lines]
+
+    para_idx = 0
+    for line, is_first, is_last in all_lines:
+        if para_idx == 0:
             p = tf.paragraphs[0]
         else:
             p = tf.add_paragraph()
-        p.space_after = spacing
-        p.level = 0
+        p.space_after = spacing if is_last else Pt(0)
+        if is_first:
+            p.level = 0
 
         # Bold 마크다운 처리
-        parts = re.split(r"(\*\*[^*]+\*\*)", item)
+        parts = re.split(r"(\*\*[^*]+\*\*)", line)
         for part in parts:
             if part.startswith("**") and part.endswith("**"):
                 run = p.add_run()
@@ -169,25 +336,48 @@ def _add_bullet_list(slide, left, top, width, height, items, font_role,
                 run = p.add_run()
                 run.text = part
                 apply_font(run, font_role, color=color)
+        para_idx += 1
     return txbox
 
 
 def _add_body_paragraphs(slide, left, top, width, height, texts, font_role,
                          color=None, line_spacing=1.15):
-    """본문 텍스트 여러 줄 추가 (Bold 마크다운 지원)."""
+    """본문 텍스트 여러 줄 추가 (Bold 마크다운 지원).
+
+    기본: 도형을 텍스트 크기에 맞춤 + 자동 줄바꿈 OFF.
+    각 텍스트를 박스 너비에 맞게 줄바꿈(Enter) 처리.
+    height가 지정되면 최대 줄 수를 계산하여 초과분을 잘라냄.
+    """
     txbox = slide.shapes.add_textbox(left, top, width, height)
     tf = txbox.text_frame
-    tf.word_wrap = True
+    tf.auto_size = MSO_AUTO_SIZE.SHAPE_TO_FIT_TEXT
+    tf.word_wrap = False
 
-    for i, text in enumerate(texts):
-        if i == 0:
+    font_pt = _get_font_pt(font_role)
+    box_width_pt = width / 12700
+
+    # 높이 기반 최대 줄 수 계산 (줄 높이 ≈ font_pt * line_spacing * 1.33)
+    line_height_pt = font_pt * line_spacing * 1.33
+    max_lines = int((height / 12700) / line_height_pt) if height > 0 else 9999
+
+    # 모든 텍스트를 먼저 줄바꿈하고 max_lines로 잘라냄
+    all_lines = []
+    for text in texts:
+        lines = _wrap_text_to_lines(text, font_pt, box_width_pt)
+        all_lines.extend(lines)
+    if len(all_lines) > max_lines:
+        all_lines = all_lines[:max_lines]
+
+    para_idx = 0
+    for line in all_lines:
+        if para_idx == 0:
             p = tf.paragraphs[0]
         else:
             p = tf.add_paragraph()
         p.space_after = Pt(4)
 
         # Bold 마크다운 처리
-        parts = re.split(r"(\*\*[^*]+\*\*)", text)
+        parts = re.split(r"(\*\*[^*]+\*\*)", line)
         for part in parts:
             if part.startswith("**") and part.endswith("**"):
                 run = p.add_run()
@@ -197,11 +387,76 @@ def _add_body_paragraphs(slide, left, top, width, height, texts, font_role,
                 run = p.add_run()
                 run.text = part
                 apply_font(run, font_role, color=color)
+        para_idx += 1
     return txbox
 
 
-def _add_image_placeholder(slide, left, top, width, height, description=""):
-    """이미지 플레이스홀더 — 모던 스타일 (연한 파란 배경 + 아이콘)."""
+def _add_picture_fit(slide, image_path, left, top, width, height):
+    """이미지를 비율 유지하며 영역에 맞춰 삽입 (축소/확대 + 크롭).
+
+    1. 원본 비율 유지하며 영역을 채울 수 있도록 확대/축소
+    2. 넘치는 부분은 크롭
+    """
+    from PIL import Image as PILImage
+    with PILImage.open(image_path) as img:
+        img_w, img_h = img.size  # pixels
+
+    img_ratio = img_w / img_h
+    target_ratio = width / height  # EMU 비율
+
+    # add_picture로 일단 삽입 (비율 유지 안됨 → 보정 필요)
+    pic = slide.shapes.add_picture(image_path, left, top)
+
+    if img_ratio > target_ratio:
+        # 이미지가 더 넓음 → 높이 맞추고 좌우 크롭
+        pic.height = height
+        pic.width = int(height * img_ratio)
+        # 가운데 정렬
+        pic.left = left + (width - pic.width) // 2
+        pic.top = top
+        # 크롭 (비율 기준, 0.0~1.0)
+        overflow = (pic.width - width) / pic.width
+        pic.crop_left = overflow / 2
+        pic.crop_right = overflow / 2
+        pic.left = left
+        pic.width = width
+    else:
+        # 이미지가 더 높음 → 너비 맞추고 상하 크롭
+        pic.width = width
+        pic.height = int(width / img_ratio)
+        pic.left = left
+        pic.top = top + (height - pic.height) // 2
+        # 크롭
+        overflow = (pic.height - height) / pic.height
+        pic.crop_top = overflow / 2
+        pic.crop_bottom = overflow / 2
+        pic.top = top
+        pic.height = height
+
+    return pic
+
+
+def _add_image_or_placeholder(slide, left, top, width, height,
+                               slide_number=None, version="A", description=""):
+    """이미지가 있으면 비율 유지하며 삽입, 없으면 플레이스홀더.
+
+    이미지 규칙:
+    - 가로세로 비율 변경 금지
+    - 축소/확대 후 영역에 맞지 않으면 크롭
+    """
+    # 이미지 매핑 조회
+    image_map = IMAGE_MAP_A if version == "A" else IMAGE_MAP_B
+    image_file = image_map.get(slide_number)
+
+    if image_file:
+        image_path = os.path.join(ASSETS_DIR, image_file)
+        if os.path.exists(image_path):
+            try:
+                return _add_picture_fit(slide, image_path, left, top, width, height)
+            except Exception as e:
+                print(f"  [WARN] 이미지 삽입 실패 ({image_file}): {e}")
+
+    # 이미지 없으면 플레이스홀더
     shape = slide.shapes.add_shape(
         MSO_SHAPE.ROUNDED_RECTANGLE, left, top, width, height
     )
@@ -211,14 +466,13 @@ def _add_image_placeholder(slide, left, top, width, height, description=""):
     shape.line.width = Pt(0.75)
 
     tf = shape.text_frame
-    tf.word_wrap = True
+    tf.auto_size = MSO_AUTO_SIZE.SHAPE_TO_FIT_TEXT
+    tf.word_wrap = False
     tf.paragraphs[0].alignment = PP_ALIGN.CENTER
-    # 아이콘 역할의 심볼
     icon_run = tf.paragraphs[0].add_run()
-    icon_run.text = "\u25A1"  # □ 사각형 심볼
+    icon_run.text = "\u25A1"
     apply_font(icon_run, "main_heading", override_size=Pt(28),
                color=RGBColor(0xB8, 0xD4, 0xE8))
-    # 설명 텍스트
     p2 = tf.add_paragraph()
     p2.alignment = PP_ALIGN.CENTER
     desc_run = p2.add_run()
@@ -306,6 +560,8 @@ def build_title_cover(slide, sc, version):
         Inches(2.0), Inches(2.1), Inches(9.0), Inches(1.2)
     )
     tf = logo_box.text_frame
+    tf.auto_size = MSO_AUTO_SIZE.SHAPE_TO_FIT_TEXT
+    tf.word_wrap = False
     p = tf.paragraphs[0]
     p.alignment = PP_ALIGN.LEFT
     run_ai = p.add_run()
@@ -375,8 +631,18 @@ def build_title_cover(slide, sc, version):
         bar.line.fill.background()
 
 
+def _estimate_text_lines(text, font_pt, box_width_inches):
+    """텍스트가 몇 줄을 차지할지 추정 (한글 기준)."""
+    # 한글 1글자 ≈ font_pt * 1.1 포인트 너비, 1인치 = 72포인트
+    char_width_pt = font_pt * 1.1
+    chars_per_line = max(1, int((box_width_inches * 72) / char_width_pt))
+    # 마크다운 Bold 제거 후 길이
+    clean = re.sub(r"\*\*([^*]+)\*\*", r"\1", text)
+    return max(1, -(-len(clean) // chars_per_line))  # ceiling division
+
+
 def build_two_column(slide, sc, version):
-    """좌우 분할 레이아웃 (텍스트 + 이미지)."""
+    """좌우 분할 레이아웃 (텍스트 + 이미지) — 겹침 방지."""
     if version == "A":
         t_left, t_width = A_TEXT_LEFT, A_TEXT_WIDTH
         i_left, i_width = A_IMAGE_LEFT, A_IMAGE_WIDTH
@@ -386,71 +652,98 @@ def build_two_column(slide, sc, version):
         i_left, i_width = B_IMAGE_LEFT, B_IMAGE_WIDTH
         font_role = "body_b"
 
+    t_width_in = t_width / 914400  # EMU to inches
+
+    # 현재 배치 Y (콘텐츠 영역 상단부터)
+    cur_top = CONTENT_TOP
+
     # 헤드라인
     if sc.headline:
-        _add_text_box(
-            slide, t_left, CONTENT_TOP, t_width, Inches(0.6),
-            sc.headline, "subtitle", color=DARK_NAVY,
-        )
-        body_top = CONTENT_TOP + Inches(0.8)
-    else:
-        body_top = CONTENT_TOP
+        # 헤드라인 길이에 따라 폰트/높이 동적 조정
+        h_lines = _estimate_text_lines(sc.headline, 22, t_width_in)
+        if h_lines > 3:
+            h_font_role = "body_a_bold"  # 18pt로 축소
+            h_lines = _estimate_text_lines(sc.headline, 18, t_width_in)
+        else:
+            h_font_role = "subtitle"  # 22pt
+        h_height = Inches(max(0.5, min(1.8, h_lines * 0.4)))
 
-    # 본문 (불릿 or 텍스트)
-    body_height = CONTENT_HEIGHT - (body_top - CONTENT_TOP) - Inches(0.3)
+        _add_text_box(
+            slide, t_left, cur_top, t_width, h_height,
+            sc.headline, h_font_role, color=DARK_NAVY,
+        )
+        cur_top += h_height + Inches(0.15)
+
+    # 인용문이 있으면 하단에 공간 확보
+    has_quote = bool(sc.quotes)
+    quote_reserve = Inches(0.9) if has_quote else Inches(0)
+
+    # 본문 영역 계산
+    body_bottom = CONTENT_TOP + CONTENT_HEIGHT - quote_reserve
+    body_height = body_bottom - cur_top
+    if body_height < Inches(0.5):
+        body_height = Inches(0.5)
+
     if sc.bullets:
         _add_bullet_list(
-            slide, t_left, body_top, t_width, body_height,
+            slide, t_left, cur_top, t_width, body_height,
             sc.bullets, font_role, color=VERY_DARK_NAVY,
         )
     elif sc.body_texts:
         _add_body_paragraphs(
-            slide, t_left, body_top, t_width, body_height,
+            slide, t_left, cur_top, t_width, body_height,
             sc.body_texts, font_role, color=VERY_DARK_NAVY,
         )
 
-    # 인용문
-    if sc.quotes:
-        q_top = body_top + body_height - Inches(1.0)
+    # 인용문 (본문 아래, 겹치지 않는 고정 위치)
+    if has_quote:
+        q_top = body_bottom + Inches(0.05)
         for quote in sc.quotes[:1]:
+            # 헤드라인과 동일한 내용이면 생략 (중복 방지)
+            if sc.headline and quote.strip('"') in sc.headline:
+                continue
             _add_text_box(
                 slide, t_left, q_top, t_width, Inches(0.8),
                 f'"{quote}"', "quote_b" if version == "B" else "small_label",
                 color=MUTED_TEAL,
             )
 
-    # 이미지 플레이스홀더
+    # 이미지 (있으면 실제 이미지, 없으면 플레이스홀더)
     desc = sc.image_refs[0] if sc.image_refs else sc.title
-    _add_image_placeholder(
-        slide, i_left, CONTENT_TOP, i_width, CONTENT_HEIGHT, desc
+    _add_image_or_placeholder(
+        slide, i_left, CONTENT_TOP, i_width, CONTENT_HEIGHT,
+        slide_number=sc.number, version=version, description=desc,
     )
 
 
 def build_chart_slide(slide, sc, version):
-    """차트 슬라이드 (시장 데이터)."""
+    """차트 슬라이드 (시장 데이터) — 헤드라인 먼저, 차트는 아래."""
+    headline = sc.headline or sc.title
     chart_keys = sc.chart_keys
 
+    # 헤드라인 (상단)
+    h_lines = _estimate_text_lines(headline, 22, CONTENT_WIDTH / 914400)
+    h_font = "body_a_bold" if h_lines > 2 else "subtitle"
+    h_height = Inches(max(0.45, min(1.0, h_lines * 0.38)))
+    _add_text_box(
+        slide, CONTENT_LEFT, CONTENT_TOP, CONTENT_WIDTH, h_height,
+        headline, h_font, color=DARK_NAVY,
+    )
+
+    chart_top = CONTENT_TOP + h_height + Inches(0.1)
+
     if len(chart_keys) >= 3:
-        # 3개 차트 병렬 배치
         for i, key in enumerate(chart_keys[:3]):
             if key in CHART_BUILDERS:
-                left, top = CHART_3_POSITIONS[i]
-                CHART_BUILDERS[key](slide, left, top, CHART_3_WIDTH, CHART_3_HEIGHT)
+                left, _ = CHART_3_POSITIONS[i]
+                CHART_BUILDERS[key](slide, left, chart_top, CHART_3_WIDTH, CHART_3_HEIGHT)
     elif len(chart_keys) >= 1:
-        # 단일 차트
         key = chart_keys[0]
         if key in CHART_BUILDERS:
             CHART_BUILDERS[key](
-                slide, CHART_SINGLE_LEFT, CHART_SINGLE_TOP,
+                slide, CHART_SINGLE_LEFT, chart_top,
                 CHART_SINGLE_WIDTH, CHART_SINGLE_HEIGHT
             )
-
-    # 헤드라인 (차트 위에 — 없으면 제목 사용)
-    headline = sc.headline or sc.title
-    _add_text_box(
-        slide, CONTENT_LEFT, CONTENT_TOP - Inches(0.15), CONTENT_WIDTH, Inches(0.5),
-        headline, "subtitle", color=DARK_NAVY,
-    )
 
 
 def build_chart_detailed(slide, sc, version):
@@ -492,18 +785,34 @@ def build_chart_detailed(slide, sc, version):
 
 
 def build_text_heavy(slide, sc, version):
-    """텍스트 중심 슬라이드 (Version B 주력)."""
+    """텍스트 중심 슬라이드 (Version B 주력) — 겹침 방지."""
     top = CONTENT_TOP
+    text_width = B_TEXT_WIDTH if version == "B" else CONTENT_WIDTH
 
-    # 헤드라인 (있으면)
+    # 헤드라인 (있으면) — 길이에 따라 동적 높이
     if sc.headline:
+        h_width_in = text_width / 914400
+        h_lines = _estimate_text_lines(sc.headline, 22, h_width_in)
+        if h_lines > 2:
+            h_font = "body_a_bold"
+            h_lines = _estimate_text_lines(sc.headline, 18, h_width_in)
+        else:
+            h_font = "subtitle"
+        h_height = Inches(max(0.45, min(1.5, h_lines * 0.38)))
         _add_text_box(
-            slide, CONTENT_LEFT, top, CONTENT_WIDTH, Inches(0.5),
-            sc.headline, "subtitle", color=DARK_NAVY,
+            slide, CONTENT_LEFT, top, text_width, h_height,
+            sc.headline, h_font, color=DARK_NAVY,
         )
-        top += Inches(0.7)
+        top += h_height + Inches(0.1)
 
-    remaining = CONTENT_HEIGHT - (top - CONTENT_TOP)
+    # 인용문 공간 확보 (하단 고정)
+    has_quote = bool(sc.quotes)
+    quote_reserve = Inches(0.9) if has_quote else Inches(0)
+    body_bottom = CONTENT_TOP + CONTENT_HEIGHT - quote_reserve
+
+    # 테이블 공간 (우측)
+    has_table = bool(sc.tables) and version == "B"
+    remaining = max(Inches(0.5), body_bottom - top)
 
     # 본문 텍스트 (불릿 + 일반 텍스트 통합)
     all_texts = []
@@ -515,25 +824,24 @@ def build_text_heavy(slide, sc, version):
     if all_texts:
         _add_body_paragraphs(
             slide, CONTENT_LEFT, top,
-            B_TEXT_WIDTH if version == "B" else CONTENT_WIDTH,
-            remaining, all_texts, "body_b" if version == "B" else "body_a",
+            text_width, remaining, all_texts,
+            "body_b" if version == "B" else "body_a",
             color=VERY_DARK_NAVY,
         )
 
-    # 인용문 (있으면)
-    if sc.quotes:
-        q_top = top + remaining - Inches(1.2)
-        for quote in sc.quotes[:2]:
-            txbox = _add_text_box(
+    # 인용문 (본문 영역 아래, 고정 위치)
+    if has_quote:
+        q_top = body_bottom + Inches(0.05)
+        for quote in sc.quotes[:1]:
+            _add_text_box(
                 slide, CONTENT_LEFT + Inches(0.3), q_top,
-                CONTENT_WIDTH - Inches(0.6), Inches(0.5),
+                CONTENT_WIDTH - Inches(0.6), Inches(0.7),
                 f'> {quote}', "quote_b" if version == "B" else "small_label",
                 color=MUTED_TEAL,
             )
-            q_top += Inches(0.55)
 
     # 테이블 (있으면, 우측에)
-    if sc.tables and version == "B":
+    if has_table:
         _add_styled_table(
             slide, B_IMAGE_LEFT, top,
             B_IMAGE_WIDTH, remaining, sc.tables[0],
@@ -541,16 +849,20 @@ def build_text_heavy(slide, sc, version):
 
 
 def build_comparison_table(slide, sc, version):
-    """비교 테이블 슬라이드."""
-    # 헤드라인
+    """비교 테이블 슬라이드 — 헤드라인 동적 높이."""
+    headline = sc.headline or sc.title
+    h_lines = _estimate_text_lines(headline, 22, CONTENT_WIDTH / 914400)
+    h_font = "body_a_bold" if h_lines > 2 else "subtitle"
+    h_height = Inches(max(0.45, min(1.2, h_lines * 0.38)))
+
     _add_text_box(
-        slide, CONTENT_LEFT, CONTENT_TOP, CONTENT_WIDTH, Inches(0.5),
-        sc.headline or sc.title, "subtitle", color=DARK_NAVY,
+        slide, CONTENT_LEFT, CONTENT_TOP, CONTENT_WIDTH, h_height,
+        headline, h_font, color=DARK_NAVY,
     )
 
     # 테이블
     if sc.tables:
-        table_top = CONTENT_TOP + Inches(0.7)
+        table_top = CONTENT_TOP + h_height + Inches(0.1)
         table_height = CONTENT_HEIGHT - Inches(1.0)
         _add_styled_table(
             slide, CONTENT_LEFT, table_top,
@@ -663,7 +975,8 @@ def build_news_quote(slide, sc, version):
         q_box.line.fill.background()
 
         tf = q_box.text_frame
-        tf.word_wrap = True
+        tf.auto_size = MSO_AUTO_SIZE.SHAPE_TO_FIT_TEXT
+        tf.word_wrap = False
         tf.paragraphs[0].space_before = Pt(8)
         p = tf.paragraphs[0]
         run = p.add_run()
@@ -723,7 +1036,8 @@ def build_infographic_numbers(slide, sc, version):
         shape.line.width = Pt(0.5)
 
         tf = shape.text_frame
-        tf.word_wrap = True
+        tf.auto_size = MSO_AUTO_SIZE.SHAPE_TO_FIT_TEXT
+        tf.word_wrap = False
         tf.paragraphs[0].alignment = PP_ALIGN.CENTER
         # 수치/텍스트를 중앙에
         run = tf.paragraphs[0].add_run()
@@ -886,11 +1200,13 @@ LAYOUT_BUILDERS = {
 #  메인 빌드 함수
 # ══════════════════════════════════════════════════════
 
-def build_deck(version: str) -> str:
+def build_deck(version: str, overwrite: bool = False) -> str:
     """PPTX 빌드 실행.
 
     Args:
         version: "A" 또는 "B"
+        overwrite: True면 최신 파일을 덮어쓰기 (오류 수정 시),
+                   False면 새 순번 파일 생성 (내용/디자인 변경 시)
 
     Returns:
         출력 파일 경로
@@ -952,7 +1268,7 @@ def build_deck(version: str) -> str:
 
         print(f"  [{sc.number:2d}/{total_slides}] {sc.title} ({sc.layout_type.value})")
 
-    # 저장 (버전 관리: 기존 파일 덮어쓰지 않고 날짜+순번 부여)
+    # 저장 (버전 관리: Ver.A / Ver.B 별도 순번)
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     today = date.today().strftime("%Y%m%d")
     prefix = f"AIsirius_회사소개서_Ver{version}_{today}"
@@ -963,17 +1279,29 @@ def build_deck(version: str) -> str:
         if f.startswith(prefix) and f.endswith(".pptx")
     ]
     max_seq = 0
+    latest_file = None
     for f in existing:
         match = re.search(r"_(\d{2})\.pptx$", f)
         if match:
-            max_seq = max(max_seq, int(match.group(1)))
+            seq = int(match.group(1))
+            if seq > max_seq:
+                max_seq = seq
+                latest_file = f
 
-    next_seq = max_seq + 1
-    output_filename = f"{prefix}_{next_seq:02d}.pptx"
-    output_path = os.path.join(OUTPUT_DIR, output_filename)
-    prs.save(output_path)
-    print(f"\n[OK] 저장 완료: {output_path}")
-    print(f"     (기존 파일 {len(existing)}개 보존됨)")
+    if overwrite and latest_file:
+        # 오류 수정 모드: 최신 파일 덮어쓰기
+        output_filename = latest_file
+        output_path = os.path.join(OUTPUT_DIR, output_filename)
+        prs.save(output_path)
+        print(f"\n[OK] 덮어쓰기 완료: {output_path}")
+    else:
+        # 내용/디자인 변경 모드: 새 순번 파일 생성
+        next_seq = max_seq + 1
+        output_filename = f"{prefix}_{next_seq:02d}.pptx"
+        output_path = os.path.join(OUTPUT_DIR, output_filename)
+        prs.save(output_path)
+        print(f"\n[OK] 저장 완료: {output_path}")
+        print(f"     (기존 파일 {len(existing)}개 보존됨)")
     return output_path
 
 
@@ -987,11 +1315,15 @@ def main():
                         help="워터마크 대상 회사명")
     parser.add_argument("--password", default="",
                         help="PDF 암호")
+    parser.add_argument("--overwrite", action="store_true",
+                        help="최신 파일 덮어쓰기 (오류 수정 시). 미지정 시 새 순번 파일 생성")
     args = parser.parse_args()
 
     print("=" * 60)
     print("  AIsirius PPTX Builder")
     print("=" * 60)
+    if args.overwrite:
+        print("  [모드: 덮어쓰기 (오류 수정)]")
 
     versions = ["A", "B"] if args.version == "all" else [args.version]
 
@@ -999,7 +1331,7 @@ def main():
         print(f"\n{'─' * 50}")
         print(f"  Version {ver} 빌드 시작")
         print(f"{'─' * 50}")
-        output_path = build_deck(ver)
+        output_path = build_deck(ver, overwrite=args.overwrite)
 
         # 워터마크 옵션
         if args.watermark and args.company:

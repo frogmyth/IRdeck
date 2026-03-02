@@ -36,10 +36,29 @@
 - NEWS_QUOTE, INFOGRAPHIC_NUMBERS, TEXT_HEAVY_TABLE
 - THANK_YOU, GENERIC 등
 
-## 이미지 처리
+## 텍스트 상자 규칙 (python-pptx)
+- **자동 맞춤**: `tf.auto_size = MSO_AUTO_SIZE.SHAPE_TO_FIT_TEXT` (도형을 텍스트 크기에 맞춤)
+- **자동 줄바꿈 OFF**: `tf.word_wrap = False` (도형의 텍스트 배치 끄기)
+- **줄바꿈**: 명시적 Enter(새 문단)으로만 처리. `_wrap_text_to_lines()` 함수로 박스 너비에 맞게 자동 줄바꿈
+- 모든 텍스트박스에 위 설정을 기본으로 적용
+
+## 이미지 규칙
+- **가로세로 비율 변경 금지**: 이미지의 원본 비율을 절대 변경하지 않음
+- **배치 순서**: 축소/확대로 영역에 맞춤 → 안 되면 크롭하여 배치
+- **이미지 소스 우선순위**:
+  1. `assets/images/slides/` (프로젝트 내 정리된 이미지)
+  2. 기존 CEO PPT에서 추출한 이미지 (`from_ppt/`)
+  3. 회사소개서 이미지 폴더 (`G:/00.googledrive/07.AIsirius/20.회사소개서/images/`)
+  4. 나노바나나2로 신규 생성
 - 인포그래픽 텍스트 → python-pptx 텍스트 오버레이 (수정 가능)
 - 원근감 적용 텍스트 → 이미지 내 포함 (나노바나나2)
 - 제품 사진 → 전용 AI로 생성 (저작권 안전)
+
+## 파일 버전 관리
+- **오류 수정/설정 변경**: `--overwrite` 옵션으로 최신 파일 덮어쓰기 (새 파일 안 만듦)
+- **내용/디자인 변경**: 새 순번 파일 생성 (`_YYYYMMDD_NN.pptx`)
+- **Ver.A와 Ver.B는 별도 순번**으로 관리
+- 기존 파일은 절대 삭제하지 않음
 
 ## 기밀 정보 관리
 - `general` 버전: 투자 조건, 주식 현황 제외
