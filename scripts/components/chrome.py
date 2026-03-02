@@ -1,10 +1,10 @@
-"""슬라이드 크롬 요소: 헤더바, 푸터, 로고, 분리선.
+"""슬라이드 크롬 요소: 헤더바, 푸터, 로고, 분리선, 장식 요소.
 
-CEO 프레젠테이션의 시각적 아이덴티티를 재현한다.
-- 오각형(쉐브론) 헤더바 + 섹션 제목
-- 하단 3색 직사각형 바
-- 수평 분리선
-- 우상단 AIsirius 로고 (AI=Cyan, sirius=Navy)
+모던 미니멀 디자인 적용:
+- 슬림 헤더 + 좌측 Cyan 액센트 바
+- 하단 슬림 액센트 라인 (3색 → 그라데이션 효과)
+- 우상단 로고
+- 좌하단 섹션 인디케이터
 """
 from pptx.util import Inches, Pt, Emu
 from pptx.enum.shapes import MSO_SHAPE
@@ -13,74 +13,86 @@ from pptx.oxml.ns import qn
 
 from .colors import (
     DARK_NAVY, BRAND_CYAN, STANDARD_BLUE, WHITE, MUTED_TEAL,
-    FOOTER_BAR_COLORS, VERY_DARK_NAVY,
 )
 from .fonts import apply_font
 from .layouts import (
-    HEADER_BAR_LEFT, HEADER_BAR_TOP, HEADER_BAR_WIDTH, HEADER_BAR_HEIGHT,
-    SECTION_TITLE_LEFT, SECTION_TITLE_TOP, SECTION_TITLE_WIDTH, SECTION_TITLE_HEIGHT,
-    SEPARATOR_LEFT, SEPARATOR_TOP, SEPARATOR_WIDTH,
-    LOGO_LEFT, LOGO_TOP, LOGO_WIDTH, LOGO_HEIGHT,
-    FOOTER_TOP, FOOTER_HEIGHT, FOOTER_BAR_WIDTH,
-    SLIDE_NUM_LEFT, SLIDE_NUM_TOP, SLIDE_NUM_WIDTH, SLIDE_NUM_HEIGHT,
-    SLIDE_WIDTH,
+    SLIDE_WIDTH, SLIDE_HEIGHT,
+    HEADER_BAR_TOP,
+    LOGO_LEFT, LOGO_WIDTH,
 )
 
 
 def add_header_bar(slide, section_title="", section_english=""):
-    """오각형(쉐브론) 헤더바를 슬라이드 상단에 추가.
+    """모던 헤더: 좌측 Cyan 액센트 스트립 + 상단 네이비 바."""
+    # 좌측 세로 Cyan 액센트 스트립 (상단 ~ 콘텐츠 영역까지)
+    accent = slide.shapes.add_shape(
+        MSO_SHAPE.RECTANGLE,
+        Inches(0), Inches(0),
+        Inches(0.12), SLIDE_HEIGHT,
+    )
+    accent.fill.solid()
+    accent.fill.fore_color.rgb = BRAND_CYAN
+    accent.line.fill.background()
 
-    Args:
-        slide: pptx Slide 객체
-        section_title: 한글 섹션 제목 (예: "시장 기회")
-        section_english: 영문 라벨 (예: "Marketing Opportunity")
-    """
-    # 헤더 배경 — 쉐브론(오각형) shape
+    # 상단 네이비 헤더 바 (슬림)
     header = slide.shapes.add_shape(
-        MSO_SHAPE.CHEVRON,
-        HEADER_BAR_LEFT, HEADER_BAR_TOP,
-        HEADER_BAR_WIDTH, HEADER_BAR_HEIGHT,
+        MSO_SHAPE.RECTANGLE,
+        Inches(0.12), HEADER_BAR_TOP,
+        SLIDE_WIDTH - Inches(0.12), Inches(0.65),
     )
     header.fill.solid()
     header.fill.fore_color.rgb = DARK_NAVY
-    header.line.fill.background()  # 테두리 없음
+    header.line.fill.background()
 
     # 섹션 제목 텍스트
     if section_title or section_english:
         txbox = slide.shapes.add_textbox(
-            SECTION_TITLE_LEFT, SECTION_TITLE_TOP,
-            SECTION_TITLE_WIDTH, SECTION_TITLE_HEIGHT,
+            Inches(0.5), Inches(0.08),
+            Inches(8.0), Inches(0.55),
         )
         tf = txbox.text_frame
         tf.word_wrap = True
+        tf.paragraphs[0].space_before = Pt(0)
+        tf.paragraphs[0].space_after = Pt(0)
 
-        # 영문 라벨 먼저 (있으면)
+        # 영문 라벨 (작게)
         if section_english:
             p = tf.paragraphs[0]
             p.alignment = PP_ALIGN.LEFT
             run = p.add_run()
-            run.text = f"AIsirius | {section_english}"
-            apply_font(run, "header_english", color=WHITE)
+            run.text = section_english
+            apply_font(run, "header_english", color=BRAND_CYAN)
 
-        # 한글 제목 (있으면)
+        # 한글 제목 (같은 줄, 구분자 + 큰 텍스트)
         if section_title:
             if section_english:
-                p = tf.add_paragraph()
+                p = tf.paragraphs[0]
+                sep = p.add_run()
+                sep.text = "  |  "
+                apply_font(sep, "header_english", color=MUTED_TEAL)
+                run = p.add_run()
+                run.text = section_title
+                apply_font(run, "header_english", override_size=Pt(16), override_bold=True, color=WHITE)
             else:
                 p = tf.paragraphs[0]
-            p.alignment = PP_ALIGN.LEFT
-            run = p.add_run()
-            run.text = section_title
-            apply_font(run, "section_header", override_size=Pt(20), color=WHITE)
+                p.alignment = PP_ALIGN.LEFT
+                run = p.add_run()
+                run.text = section_title
+                apply_font(run, "section_header", override_size=Pt(18), color=WHITE)
 
 
 def add_footer_bars(slide):
-    """하단 3색 직사각형 바 추가."""
-    for i, color in enumerate(FOOTER_BAR_COLORS):
+    """모던 푸터: 슬림 3색 액센트 라인 (하단 4px)."""
+    bar_height = Inches(0.06)  # 약 4px
+    bar_top = SLIDE_HEIGHT - bar_height
+    bar_width = SLIDE_WIDTH / 3
+
+    colors = [DARK_NAVY, STANDARD_BLUE, BRAND_CYAN]
+    for i, color in enumerate(colors):
         bar = slide.shapes.add_shape(
             MSO_SHAPE.RECTANGLE,
-            Inches(i * (13.333 / 3)), FOOTER_TOP,
-            FOOTER_BAR_WIDTH, FOOTER_HEIGHT,
+            Inches(i * 13.333 / 3), bar_top,
+            bar_width, bar_height,
         )
         bar.fill.solid()
         bar.fill.fore_color.rgb = color
@@ -88,24 +100,21 @@ def add_footer_bars(slide):
 
 
 def add_separator_line(slide):
-    """헤더 아래 수평 분리선 추가."""
+    """헤더 아래 Cyan 분리선."""
     connector = slide.shapes.add_connector(
         1,  # straight connector
-        SEPARATOR_LEFT, SEPARATOR_TOP,
-        SEPARATOR_LEFT + SEPARATOR_WIDTH, SEPARATOR_TOP,
+        Inches(0.12), Inches(0.66),
+        SLIDE_WIDTH, Inches(0.66),
     )
     connector.line.color.rgb = BRAND_CYAN
-    connector.line.width = Pt(1.5)
+    connector.line.width = Pt(1.0)
 
 
 def add_logo(slide):
-    """우상단 AIsirius 로고 텍스트 추가.
-
-    "AI" = Cyan (#32EDF6), "sirius" = Dark Navy (#0E1D62)
-    """
+    """우상단 AIsirius 로고 텍스트."""
     txbox = slide.shapes.add_textbox(
-        LOGO_LEFT, LOGO_TOP,
-        LOGO_WIDTH, LOGO_HEIGHT,
+        LOGO_LEFT, Inches(0.12),
+        LOGO_WIDTH, Inches(0.42),
     )
     tf = txbox.text_frame
     tf.word_wrap = False
@@ -120,14 +129,14 @@ def add_logo(slide):
     # "sirius" run
     run_sirius = p.add_run()
     run_sirius.text = "sirius"
-    apply_font(run_sirius, "logo_sirius", color=DARK_NAVY)
+    apply_font(run_sirius, "logo_sirius", color=WHITE)
 
 
 def add_slide_number(slide, number, total=None):
-    """슬라이드 번호 추가."""
+    """슬라이드 번호 (우하단, 푸터 위)."""
     txbox = slide.shapes.add_textbox(
-        SLIDE_NUM_LEFT, SLIDE_NUM_TOP,
-        SLIDE_NUM_WIDTH, SLIDE_NUM_HEIGHT,
+        Inches(12.2), SLIDE_HEIGHT - Inches(0.4),
+        Inches(0.9), Inches(0.3),
     )
     tf = txbox.text_frame
     p = tf.paragraphs[0]
@@ -139,8 +148,32 @@ def add_slide_number(slide, number, total=None):
     apply_font(run, "slide_number", color=MUTED_TEAL)
 
 
+def add_bottom_accent(slide):
+    """좌하단 장식 요소: 작은 Cyan 사각형 + 회사명."""
+    # 작은 Cyan 사각형 (인디케이터)
+    indicator = slide.shapes.add_shape(
+        MSO_SHAPE.RECTANGLE,
+        Inches(0.5), SLIDE_HEIGHT - Inches(0.45),
+        Inches(0.3), Inches(0.08),
+    )
+    indicator.fill.solid()
+    indicator.fill.fore_color.rgb = BRAND_CYAN
+    indicator.line.fill.background()
+
+    # 회사명
+    txbox = slide.shapes.add_textbox(
+        Inches(0.9), SLIDE_HEIGHT - Inches(0.5),
+        Inches(3.0), Inches(0.3),
+    )
+    tf = txbox.text_frame
+    p = tf.paragraphs[0]
+    run = p.add_run()
+    run.text = "AIsirius Co., Ltd.  |  Confidential"
+    apply_font(run, "source_text", color=MUTED_TEAL)
+
+
 def add_full_chrome(slide, section_title="", section_english="", slide_number=None, total_slides=None):
-    """크롬 요소 전체 적용 (표지/감사 슬라이드 제외 시 사용).
+    """크롬 요소 전체 적용 (표지/감사 슬라이드 제외).
 
     Args:
         slide: pptx Slide 객체
@@ -153,5 +186,6 @@ def add_full_chrome(slide, section_title="", section_english="", slide_number=No
     add_separator_line(slide)
     add_footer_bars(slide)
     add_logo(slide)
+    add_bottom_accent(slide)
     if slide_number is not None:
         add_slide_number(slide, slide_number, total_slides)

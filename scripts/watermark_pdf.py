@@ -86,7 +86,7 @@ def create_watermark_image(
         logo = logo.rotate(angle, expand=True, resample=Image.BICUBIC)
 
     if tile:
-        # 타일 패턴: 슬라이드 크기(10x7.5인치 @ 96dpi = 960x720)에 맞춰 반복
+        # 타일 패턴: 슬라이드 크기(16:9 = 1920x1080)에 맞춰 반복
         canvas_w, canvas_h = 1920, 1080
         tile_w, tile_h = logo.size
         canvas = Image.new("RGBA", (canvas_w, canvas_h), (0, 0, 0, 0))

@@ -20,10 +20,10 @@ from .fonts import apply_font
 MARKET_DATA = {
     "ESL": {
         "years": [2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030],
-        "values": [1.29, 1.61, 2.34, 2.75, 2.39, 3.10, 3.53, 4.18, 3.78],
+        "values": [1.29, 1.61, 2.34, 2.75, 2.39, 3.10, 3.53, 4.18, 8.37],
         "label": "글로벌 ESL 시장 ($B)",
-        "cagr": "13.9%",
-        "source": "MarketsandMarkets / Mordor Intelligence",
+        "cagr": "20.1%",
+        "source": "MarketsandMarkets / The Insight Partners",
     },
     "RMN_AD_SPEND": {
         "years": [2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030],
@@ -47,9 +47,9 @@ MARKET_DATA = {
     },
     "J_CURVE": {
         "years": [2025, 2026, 2027, 2028, 2029, 2030],
-        "values": [10, 35, 92, 247, 550, 1100],
+        "values": [30, 60, 200, 800, 1500, 2000],
         "label": "AIsirius 매출 로드맵 (억원)",
-        "milestones": ["Pre-A", "35억", "시리즈A", "247억", "시리즈B", "1,100억/IPO"],
+        "milestones": ["30억", "60억", "200억", "800억", "1,500억", "2,000억/IPO"],
         "source": "AIsirius 내부 계획",
     },
 }

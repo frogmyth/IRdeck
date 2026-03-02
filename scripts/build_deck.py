@@ -32,7 +32,7 @@ from pptx.dml.color import RGBColor
 
 from components.colors import (
     DARK_NAVY, VERY_DARK_NAVY, BRAND_CYAN, STANDARD_BLUE,
-    BRIGHT_BLUE, TEAL, WHITE, BLACK, LIGHT_GRAY, PALE_BLUE,
+    BRIGHT_BLUE, TEAL, WHITE, BLACK, PALE_BLUE,
     MUTED_TEAL, LIME_GREEN, TABLE_HEADER_BG, TABLE_HEADER_FG,
     TABLE_ALT_ROW, TABLE_BODY_FG,
 )
@@ -92,31 +92,35 @@ SECTION_MAP_A = {
 }
 
 SECTION_MAP_B = {
-    1: ("", ""),
-    2: ("시장 기회", "Marketing Opportunity"),
-    3: ("시장 기회", "Marketing Opportunity"),
-    4: ("시장 기회", "Expected Outcomes and Target Market"),
-    5: ("시장 기회", "Expected Outcomes and Target Market"),
-    6: ("시장 기회", "Retail Business Strategies"),
-    7: ("시장 기회", "Retail Business Strategies"),
-    8: ("비즈니스 모델", "Business Model"),
-    9: ("비즈니스 모델", "Business Model"),
-    10: ("AI 기술", "Business Model — AI Technology"),
-    11: ("플랫폼", "Product — CMS Platform"),
-    12: ("플랫폼", "Product — CMS Platform"),
-    13: ("AI 기술", "AI Content Generation"),
-    14: ("플랫폼", "Cross-Device Integration"),
-    15: ("AI 기술", "3-Stage Distributed AI"),
-    16: ("플랫폼", "HW Lineup"),
-    17: ("비즈니스", "Revenue Model"),
-    18: ("비즈니스", "ROI Analysis"),
-    19: ("비즈니스", "Global Strategy"),
-    20: ("비즈니스", "Revenue Roadmap"),
-    21: ("비즈니스", "Expansion Vision"),
-    22: ("팀", "Traction"),
-    23: ("팀", "ESG"),
-    24: ("팀", "About AIsirius"),
-    25: ("", ""),
+    1: ("", ""),                                             # 표지
+    2: ("AIsirius 소개", "Company Definition"),               # 한 줄 정의 (신규)
+    3: ("시장 기회", "Marketing Opportunity"),                 # DX→AX
+    4: ("시장 기회", "Marketing Opportunity"),                 # AX 비즈니스 기회
+    5: ("시장 기회", "Expected Outcomes and Target Market"),   # 글로벌 시장 규모
+    6: ("시장 기회", "Expected Outcomes and Target Market"),   # ESL 지역별 도입률
+    7: ("시장 기회", "Retail Business Strategies"),            # 월마트 사례 1/2
+    8: ("시장 기회", "Retail Business Strategies"),            # 월마트 사례 2/2
+    9: ("비즈니스 모델", "Business Model"),                    # AIsirius 핵심 정의
+    10: ("비즈니스 모델", "ISO4OM 3 Solutions"),               # ISO4OM 3 Solutions
+    11: ("AI 기술", "AI Technology"),                          # 전용 AI vs 범용 AI
+    12: ("플랫폼", "CMS Platform"),                           # CMS 기능 1/2
+    13: ("플랫폼", "CMS Platform"),                           # CMS 기능 2/2
+    14: ("AI 기술", "AI Content Generation"),                  # AI 콘텐츠 자동 생성
+    15: ("플랫폼", "Cross-Device Integration"),                # 크로스 디바이스
+    16: ("AI 기술", "3-Stage Distributed AI"),                 # 3단 분산 AI
+    17: ("플랫폼", "HW Lineup"),                              # HW 라인업
+    18: ("비즈니스", "Revenue Model"),                         # 수익 모델
+    19: ("비즈니스", "ROI Analysis"),                          # ROI 분석
+    20: ("비즈니스", "Global Strategy"),                       # 글로벌 전략
+    21: ("비즈니스", "Revenue Roadmap"),                       # J-Curve
+    22: ("비즈니스", "Expansion Vision"),                      # 통합 솔루션 확장
+    23: ("팀", "Traction"),                                   # 국내 트랙션
+    24: ("팀", "ESG"),                                        # ESG
+    25: ("팀", "About AIsirius"),                             # CEO & 팀
+    26: ("", ""),                                             # 감사합니다
+    27: ("부록", "Appendix"),                                 # 부록 1
+    28: ("부록", "Appendix"),                                 # 부록 2
+    29: ("부록", "Appendix"),                                 # 부록 3
 }
 
 
@@ -125,7 +129,8 @@ SECTION_MAP_B = {
 # ══════════════════════════════════════════════════════
 
 def _add_text_box(slide, left, top, width, height, text, font_role,
-                  color=None, alignment=PP_ALIGN.LEFT, word_wrap=True):
+                  color=None, alignment=PP_ALIGN.LEFT, word_wrap=True,
+                  override_size=None):
     """텍스트박스를 추가하고 폰트를 적용하는 헬퍼."""
     txbox = slide.shapes.add_textbox(left, top, width, height)
     tf = txbox.text_frame
@@ -134,7 +139,7 @@ def _add_text_box(slide, left, top, width, height, text, font_role,
     p.alignment = alignment
     run = p.add_run()
     run.text = text
-    apply_font(run, font_role, color=color)
+    apply_font(run, font_role, color=color, override_size=override_size)
     return txbox
 
 
@@ -196,21 +201,29 @@ def _add_body_paragraphs(slide, left, top, width, height, texts, font_role,
 
 
 def _add_image_placeholder(slide, left, top, width, height, description=""):
-    """이미지 플레이스홀더 (회색 사각형 + 텍스트)."""
+    """이미지 플레이스홀더 — 모던 스타일 (연한 파란 배경 + 아이콘)."""
     shape = slide.shapes.add_shape(
         MSO_SHAPE.ROUNDED_RECTANGLE, left, top, width, height
     )
     shape.fill.solid()
-    shape.fill.fore_color.rgb = LIGHT_GRAY
-    shape.line.color.rgb = MUTED_TEAL
-    shape.line.width = Pt(1)
+    shape.fill.fore_color.rgb = PALE_BLUE
+    shape.line.color.rgb = RGBColor(0xB8, 0xD4, 0xE8)
+    shape.line.width = Pt(0.75)
 
     tf = shape.text_frame
     tf.word_wrap = True
     tf.paragraphs[0].alignment = PP_ALIGN.CENTER
-    run = tf.paragraphs[0].add_run()
-    run.text = f"[Image]\n{description}" if description else "[Image Placeholder]"
-    apply_font(run, "small_label", color=MUTED_TEAL)
+    # 아이콘 역할의 심볼
+    icon_run = tf.paragraphs[0].add_run()
+    icon_run.text = "\u25A1"  # □ 사각형 심볼
+    apply_font(icon_run, "main_heading", override_size=Pt(28),
+               color=RGBColor(0xB8, 0xD4, 0xE8))
+    # 설명 텍스트
+    p2 = tf.add_paragraph()
+    p2.alignment = PP_ALIGN.CENTER
+    desc_run = p2.add_run()
+    desc_run.text = description if description else "Image"
+    apply_font(desc_run, "source_text", color=MUTED_TEAL)
     return shape
 
 
@@ -260,8 +273,8 @@ def _add_styled_table(slide, left, top, width, height, table_data):
 # ── 슬라이드 타입별 빌더 ─────────────────────────────
 
 def build_title_cover(slide, sc, version):
-    """표지 슬라이드 (크롬 없음)."""
-    # 배경 — 어두운 반투명 오버레이
+    """표지 슬라이드 — 모던 디자인 (크롬 없음)."""
+    # 배경 — 네이비 풀 블리드
     bg = slide.shapes.add_shape(
         MSO_SHAPE.RECTANGLE, 0, 0, SLIDE_WIDTH, SLIDE_HEIGHT
     )
@@ -269,54 +282,97 @@ def build_title_cover(slide, sc, version):
     bg.fill.fore_color.rgb = DARK_NAVY
     bg.line.fill.background()
 
-    # 로고 텍스트
+    # 좌측 Cyan 액센트 스트립
+    accent = slide.shapes.add_shape(
+        MSO_SHAPE.RECTANGLE, 0, 0,
+        Inches(0.12), SLIDE_HEIGHT,
+    )
+    accent.fill.solid()
+    accent.fill.fore_color.rgb = BRAND_CYAN
+    accent.line.fill.background()
+
+    # 상단 Cyan 수평선 (장식)
+    top_line = slide.shapes.add_shape(
+        MSO_SHAPE.RECTANGLE,
+        Inches(2.0), Inches(1.8),
+        Inches(9.0), Inches(0.03),
+    )
+    top_line.fill.solid()
+    top_line.fill.fore_color.rgb = BRAND_CYAN
+    top_line.line.fill.background()
+
+    # 로고 텍스트 (큰 사이즈)
     logo_box = slide.shapes.add_textbox(
-        Inches(4.5), Inches(1.5), Inches(4.5), Inches(1.0)
+        Inches(2.0), Inches(2.1), Inches(9.0), Inches(1.2)
     )
     tf = logo_box.text_frame
     p = tf.paragraphs[0]
-    p.alignment = PP_ALIGN.CENTER
+    p.alignment = PP_ALIGN.LEFT
     run_ai = p.add_run()
     run_ai.text = "AI"
-    apply_font(run_ai, "main_heading", override_size=Pt(48), color=BRAND_CYAN)
+    apply_font(run_ai, "main_heading", override_size=Pt(60), color=BRAND_CYAN)
     run_s = p.add_run()
     run_s.text = "sirius"
-    apply_font(run_s, "main_heading", override_size=Pt(48), color=WHITE)
+    apply_font(run_s, "main_heading", override_size=Pt(60), color=WHITE)
 
     # 서브타이틀
     _add_text_box(
-        slide, Inches(2.5), Inches(2.8), Inches(8.3), Inches(0.6),
-        "ISO4OM Platform (In Store Merchandising)",
-        "subtitle", color=BRIGHT_BLUE, alignment=PP_ALIGN.CENTER,
+        slide, Inches(2.0), Inches(3.4), Inches(9.0), Inches(0.5),
+        "ISO4OM Platform  —  In Store O4O Merchandising",
+        "subtitle", color=BRIGHT_BLUE, alignment=PP_ALIGN.LEFT,
     )
 
     # 메인 태그라인
     _add_text_box(
-        slide, Inches(2.5), Inches(3.6), Inches(8.3), Inches(0.8),
+        slide, Inches(2.0), Inches(4.1), Inches(9.0), Inches(0.7),
         "Store into Media, Shelf into Profit",
-        "section_header", color=WHITE, alignment=PP_ALIGN.CENTER,
+        "section_header", color=WHITE, alignment=PP_ALIGN.LEFT,
     )
 
     # 슬로건
     _add_text_box(
-        slide, Inches(2.5), Inches(4.5), Inches(8.3), Inches(0.5),
+        slide, Inches(2.0), Inches(4.8), Inches(9.0), Inches(0.5),
         "Create AI Smart Flow & Data Driven",
-        "header_english", color=MUTED_TEAL, alignment=PP_ALIGN.CENTER,
+        "header_english", override_size=Pt(16), color=MUTED_TEAL,
+        alignment=PP_ALIGN.LEFT,
     )
+
+    # 하단 Cyan 수평선 (장식)
+    bot_line = slide.shapes.add_shape(
+        MSO_SHAPE.RECTANGLE,
+        Inches(2.0), Inches(5.8),
+        Inches(9.0), Inches(0.03),
+    )
+    bot_line.fill.solid()
+    bot_line.fill.fore_color.rgb = BRAND_CYAN
+    bot_line.line.fill.background()
 
     # 하단 회사명
     _add_text_box(
-        slide, Inches(3.5), Inches(6.0), Inches(6.3), Inches(0.4),
-        "에이아이시리우스(주) | AIsirius Co., Ltd.",
-        "small_label", color=WHITE, alignment=PP_ALIGN.CENTER,
+        slide, Inches(2.0), Inches(6.0), Inches(5.0), Inches(0.4),
+        "에이아이시리우스(주)  |  AIsirius Co., Ltd.",
+        "small_label", color=WHITE, alignment=PP_ALIGN.LEFT,
     )
 
-    # 날짜 + Confidential
+    # 날짜 + Confidential (우측 정렬)
     _add_text_box(
-        slide, Inches(3.5), Inches(6.5), Inches(6.3), Inches(0.4),
-        f"{date.today().strftime('%Y.%m')} | Confidential",
-        "source_text", color=MUTED_TEAL, alignment=PP_ALIGN.CENTER,
+        slide, Inches(8.0), Inches(6.0), Inches(3.0), Inches(0.4),
+        f"{date.today().strftime('%Y.%m')}  |  Confidential",
+        "source_text", color=MUTED_TEAL, alignment=PP_ALIGN.RIGHT,
     )
+
+    # 하단 3색 액센트 라인
+    bar_h = Inches(0.06)
+    bar_top = SLIDE_HEIGHT - bar_h
+    bar_w = SLIDE_WIDTH / 3
+    for i, color in enumerate([DARK_NAVY, STANDARD_BLUE, BRAND_CYAN]):
+        bar = slide.shapes.add_shape(
+            MSO_SHAPE.RECTANGLE,
+            Inches(i * 13.333 / 3), bar_top, bar_w, bar_h,
+        )
+        bar.fill.solid()
+        bar.fill.fore_color.rgb = color
+        bar.line.fill.background()
 
 
 def build_two_column(slide, sc, version):
@@ -511,7 +567,7 @@ def build_comparison_table(slide, sc, version):
 
 
 def build_three_pillar(slide, sc, version):
-    """3단 (Three Pillar) 레이아웃."""
+    """3단 (Three Pillar) 레이아웃 — 모던 카드 스타일."""
     # 헤드라인
     _add_text_box(
         slide, CONTENT_LEFT, CONTENT_TOP, CONTENT_WIDTH, Inches(0.5),
@@ -530,31 +586,50 @@ def build_three_pillar(slide, sc, version):
         end = start + items_per_pillar if i < 2 else len(sc.bullets)
         pillar_items = sc.bullets[start:end]
 
-        # 기둥 배경
+        # 상단 컬러 액센트 바 (카드 위)
+        accent_bar = slide.shapes.add_shape(
+            MSO_SHAPE.RECTANGLE, left, pillar_top,
+            PILLAR_WIDTH, Inches(0.08),
+        )
+        accent_bar.fill.solid()
+        accent_bar.fill.fore_color.rgb = pillar_colors[i]
+        accent_bar.line.fill.background()
+
+        # 기둥 배경 (흰색 카드 + 그림자 효과 = 연한 테두리)
         shape = slide.shapes.add_shape(
-            MSO_SHAPE.ROUNDED_RECTANGLE, left, pillar_top,
-            PILLAR_WIDTH, PILLAR_HEIGHT,
+            MSO_SHAPE.RECTANGLE, left, pillar_top + Inches(0.08),
+            PILLAR_WIDTH, PILLAR_HEIGHT - Inches(0.08),
         )
         shape.fill.solid()
-        shape.fill.fore_color.rgb = PALE_BLUE
-        shape.line.color.rgb = pillar_colors[i]
-        shape.line.width = Pt(2)
+        shape.fill.fore_color.rgb = RGBColor(0xFA, 0xFB, 0xFC)
+        shape.line.color.rgb = RGBColor(0xE0, 0xE4, 0xE8)
+        shape.line.width = Pt(0.5)
 
         # 기둥 제목
         if pillar_items:
             title_text = pillar_items[0] if pillar_items else f"Pillar {i+1}"
             _add_text_box(
-                slide, left + Inches(0.2), pillar_top + Inches(0.3),
-                PILLAR_WIDTH - Inches(0.4), Inches(0.5),
+                slide, left + Inches(0.25), pillar_top + Inches(0.3),
+                PILLAR_WIDTH - Inches(0.5), Inches(0.5),
                 title_text, "body_a_bold" if version == "A" else "body_b",
-                color=pillar_colors[i], alignment=PP_ALIGN.CENTER,
+                color=pillar_colors[i], alignment=PP_ALIGN.LEFT,
             )
+
+        # 컬러 구분선
+        divider = slide.shapes.add_shape(
+            MSO_SHAPE.RECTANGLE,
+            left + Inches(0.25), pillar_top + Inches(0.85),
+            Inches(0.8), Inches(0.02),
+        )
+        divider.fill.solid()
+        divider.fill.fore_color.rgb = pillar_colors[i]
+        divider.line.fill.background()
 
         # 기둥 내용
         if len(pillar_items) > 1:
             _add_bullet_list(
-                slide, left + Inches(0.2), pillar_top + Inches(1.0),
-                PILLAR_WIDTH - Inches(0.4), PILLAR_HEIGHT - Inches(1.3),
+                slide, left + Inches(0.25), pillar_top + Inches(1.05),
+                PILLAR_WIDTH - Inches(0.5), PILLAR_HEIGHT - Inches(1.3),
                 pillar_items[1:],
                 "body_a" if version == "A" else "body_b",
                 color=VERY_DARK_NAVY,
@@ -562,29 +637,39 @@ def build_three_pillar(slide, sc, version):
 
 
 def build_news_quote(slide, sc, version):
-    """뉴스 인용 슬라이드 (Version B)."""
+    """뉴스 인용 슬라이드 — 모던 좌측 액센트 인용 스타일."""
     top = CONTENT_TOP
 
     # 뉴스 인용문들
     for i, quote in enumerate(sc.quotes):
-        # 인용 박스
-        q_box = slide.shapes.add_shape(
-            MSO_SHAPE.ROUNDED_RECTANGLE,
+        # 좌측 액센트 바
+        accent = slide.shapes.add_shape(
+            MSO_SHAPE.RECTANGLE,
             CONTENT_LEFT, top,
-            CONTENT_WIDTH, Inches(1.2),
+            Inches(0.08), Inches(1.1),
+        )
+        accent.fill.solid()
+        accent.fill.fore_color.rgb = BRAND_CYAN
+        accent.line.fill.background()
+
+        # 인용 박스 배경
+        q_box = slide.shapes.add_shape(
+            MSO_SHAPE.RECTANGLE,
+            CONTENT_LEFT + Inches(0.15), top,
+            CONTENT_WIDTH - Inches(0.15), Inches(1.1),
         )
         q_box.fill.solid()
-        q_box.fill.fore_color.rgb = PALE_BLUE
-        q_box.line.color.rgb = STANDARD_BLUE
-        q_box.line.width = Pt(1)
+        q_box.fill.fore_color.rgb = RGBColor(0xF5, 0xF8, 0xFC)
+        q_box.line.fill.background()
 
         tf = q_box.text_frame
         tf.word_wrap = True
+        tf.paragraphs[0].space_before = Pt(8)
         p = tf.paragraphs[0]
         run = p.add_run()
         run.text = quote
         apply_font(run, "body_b", color=DARK_NAVY)
-        top += Inches(1.4)
+        top += Inches(1.3)
 
         if top > Inches(5.5):
             break
@@ -600,32 +685,47 @@ def build_news_quote(slide, sc, version):
 
 
 def build_infographic_numbers(slide, sc, version):
-    """숫자 인포그래픽 (ROI 등)."""
+    """숫자 인포그래픽 — 모던 카드 스타일 (ROI 등)."""
     _add_text_box(
         slide, CONTENT_LEFT, CONTENT_TOP, CONTENT_WIDTH, Inches(0.5),
         sc.headline or sc.title, "subtitle", color=DARK_NAVY,
     )
 
-    # 핵심 숫자를 크게 배치
+    # 핵심 숫자를 카드형으로 배치
     numbers_top = CONTENT_TOP + Inches(0.8)
-    col_width = CONTENT_WIDTH / 4
-
     key_numbers = sc.bullets[:4] if sc.bullets else []
+    n_cards = max(1, len(key_numbers))
+    col_width = CONTENT_WIDTH / n_cards
+    card_colors = [STANDARD_BLUE, TEAL, LIME_GREEN, BRIGHT_BLUE]
+
     for i, item in enumerate(key_numbers):
         left = CONTENT_LEFT + col_width * i
-        # 숫자 박스
+
+        # 상단 컬러 액센트
+        accent = slide.shapes.add_shape(
+            MSO_SHAPE.RECTANGLE,
+            left + Inches(0.15), numbers_top,
+            col_width - Inches(0.3), Inches(0.06),
+        )
+        accent.fill.solid()
+        accent.fill.fore_color.rgb = card_colors[i % 4]
+        accent.line.fill.background()
+
+        # 카드 배경
         shape = slide.shapes.add_shape(
-            MSO_SHAPE.ROUNDED_RECTANGLE,
-            left + Inches(0.1), numbers_top,
-            col_width - Inches(0.2), Inches(2.0),
+            MSO_SHAPE.RECTANGLE,
+            left + Inches(0.15), numbers_top + Inches(0.06),
+            col_width - Inches(0.3), Inches(2.2),
         )
         shape.fill.solid()
-        shape.fill.fore_color.rgb = PALE_BLUE
-        shape.line.fill.background()
+        shape.fill.fore_color.rgb = RGBColor(0xFA, 0xFB, 0xFC)
+        shape.line.color.rgb = RGBColor(0xE0, 0xE4, 0xE8)
+        shape.line.width = Pt(0.5)
 
         tf = shape.text_frame
         tf.word_wrap = True
         tf.paragraphs[0].alignment = PP_ALIGN.CENTER
+        # 수치/텍스트를 중앙에
         run = tf.paragraphs[0].add_run()
         run.text = item
         apply_font(run, "body_a_bold" if version == "A" else "body_b", color=DARK_NAVY)
@@ -655,8 +755,8 @@ def build_text_heavy_table(slide, sc, version):
 
 
 def build_thank_you(slide, sc, version):
-    """감사 슬라이드 (크롬 없음)."""
-    # 배경
+    """감사 슬라이드 — 모던 디자인 (크롬 없음)."""
+    # 배경 — 네이비 풀 블리드
     bg = slide.shapes.add_shape(
         MSO_SHAPE.RECTANGLE, 0, 0, SLIDE_WIDTH, SLIDE_HEIGHT
     )
@@ -664,29 +764,90 @@ def build_thank_you(slide, sc, version):
     bg.fill.fore_color.rgb = DARK_NAVY
     bg.line.fill.background()
 
-    # 감사합니다
-    _add_text_box(
-        slide, Inches(3), Inches(2.0), Inches(7), Inches(1.2),
-        "감사합니다", "main_heading", color=WHITE, alignment=PP_ALIGN.CENTER,
+    # 좌측 Cyan 액센트 스트립 (표지와 통일)
+    accent = slide.shapes.add_shape(
+        MSO_SHAPE.RECTANGLE, 0, 0,
+        Inches(0.12), SLIDE_HEIGHT,
     )
+    accent.fill.solid()
+    accent.fill.fore_color.rgb = BRAND_CYAN
+    accent.line.fill.background()
+
+    # 감사합니다 (좌측 정렬, 큰 타이포)
     _add_text_box(
-        slide, Inches(3), Inches(3.2), Inches(7), Inches(0.6),
-        "Thank you", "section_header", color=BRAND_CYAN, alignment=PP_ALIGN.CENTER,
+        slide, Inches(2.0), Inches(1.8), Inches(9.0), Inches(1.2),
+        "감사합니다", "main_heading", override_size=Pt(52),
+        color=WHITE, alignment=PP_ALIGN.LEFT,
     )
 
-    # 연락처
-    contacts = [
-        "sale@aisirius.ai  |  031-360-7869",
-        "www.aisirius.ai  |  cms.aisirius.ai",
-        "경기도 수원시 영통구 광교로 105, 경기R&DB센터 709호",
+    # 수평선
+    line = slide.shapes.add_shape(
+        MSO_SHAPE.RECTANGLE,
+        Inches(2.0), Inches(3.1),
+        Inches(3.0), Inches(0.03),
+    )
+    line.fill.solid()
+    line.fill.fore_color.rgb = BRAND_CYAN
+    line.line.fill.background()
+
+    _add_text_box(
+        slide, Inches(2.0), Inches(3.3), Inches(9.0), Inches(0.6),
+        "Thank you for your time",
+        "section_header", color=BRAND_CYAN, alignment=PP_ALIGN.LEFT,
+    )
+
+    # 연락처 영역 — 2컬럼
+    _add_text_box(
+        slide, Inches(2.0), Inches(4.5), Inches(4.0), Inches(0.35),
+        "Contact", "body_a_bold", color=BRIGHT_BLUE, alignment=PP_ALIGN.LEFT,
+    )
+    contacts_left = [
+        "sale@aisirius.ai",
+        "031-360-7869",
+        "www.aisirius.ai",
     ]
-    c_top = Inches(4.5)
-    for text in contacts:
+    c_top = Inches(5.0)
+    for text in contacts_left:
         _add_text_box(
-            slide, Inches(3), c_top, Inches(7), Inches(0.35),
-            text, "small_label", color=MUTED_TEAL, alignment=PP_ALIGN.CENTER,
+            slide, Inches(2.0), c_top, Inches(4.0), Inches(0.3),
+            text, "small_label", color=WHITE, alignment=PP_ALIGN.LEFT,
         )
-        c_top += Inches(0.4)
+        c_top += Inches(0.35)
+
+    _add_text_box(
+        slide, Inches(7.0), Inches(4.5), Inches(5.0), Inches(0.35),
+        "Address", "body_a_bold", color=BRIGHT_BLUE, alignment=PP_ALIGN.LEFT,
+    )
+    _add_text_box(
+        slide, Inches(7.0), Inches(5.0), Inches(5.0), Inches(0.3),
+        "경기도 수원시 영통구 광교로 105", "small_label",
+        color=WHITE, alignment=PP_ALIGN.LEFT,
+    )
+    _add_text_box(
+        slide, Inches(7.0), Inches(5.35), Inches(5.0), Inches(0.3),
+        "경기R&DB센터 / 경기창조경제혁신센터 709호", "small_label",
+        color=WHITE, alignment=PP_ALIGN.LEFT,
+    )
+
+    # CMS 데모
+    _add_text_box(
+        slide, Inches(7.0), Inches(5.85), Inches(5.0), Inches(0.3),
+        "CMS Demo: cms.aisirius.ai", "small_label",
+        color=MUTED_TEAL, alignment=PP_ALIGN.LEFT,
+    )
+
+    # 하단 3색 액센트 라인
+    bar_h = Inches(0.06)
+    bar_top = SLIDE_HEIGHT - bar_h
+    bar_w = SLIDE_WIDTH / 3
+    for i, color in enumerate([DARK_NAVY, STANDARD_BLUE, BRAND_CYAN]):
+        bar = slide.shapes.add_shape(
+            MSO_SHAPE.RECTANGLE,
+            Inches(i * 13.333 / 3), bar_top, bar_w, bar_h,
+        )
+        bar.fill.solid()
+        bar.fill.fore_color.rgb = color
+        bar.line.fill.background()
 
 
 def build_generic(slide, sc, version):
@@ -791,13 +952,28 @@ def build_deck(version: str) -> str:
 
         print(f"  [{sc.number:2d}/{total_slides}] {sc.title} ({sc.layout_type.value})")
 
-    # 저장
+    # 저장 (버전 관리: 기존 파일 덮어쓰지 않고 날짜+순번 부여)
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     today = date.today().strftime("%Y%m%d")
-    output_filename = f"AIsirius_회사소개서_Ver{version}_{today}.pptx"
+    prefix = f"AIsirius_회사소개서_Ver{version}_{today}"
+
+    # 같은 날짜의 기존 파일 중 최대 순번 찾기
+    existing = [
+        f for f in os.listdir(OUTPUT_DIR)
+        if f.startswith(prefix) and f.endswith(".pptx")
+    ]
+    max_seq = 0
+    for f in existing:
+        match = re.search(r"_(\d{2})\.pptx$", f)
+        if match:
+            max_seq = max(max_seq, int(match.group(1)))
+
+    next_seq = max_seq + 1
+    output_filename = f"{prefix}_{next_seq:02d}.pptx"
     output_path = os.path.join(OUTPUT_DIR, output_filename)
     prs.save(output_path)
     print(f"\n[OK] 저장 완료: {output_path}")
+    print(f"     (기존 파일 {len(existing)}개 보존됨)")
     return output_path
 
 
