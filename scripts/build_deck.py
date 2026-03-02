@@ -5,6 +5,7 @@
 Usage:
     python scripts/build_deck.py --version A
     python scripts/build_deck.py --version B
+    python scripts/build_deck.py --version IR
     python scripts/build_deck.py --version all
     python scripts/build_deck.py --version A --watermark --company "대상회사"
 """
@@ -160,6 +161,56 @@ SECTION_MAP_B = {
     29: ("부록", "Appendix"),                                 # 부록 1
     30: ("부록", "Appendix"),                                 # 부록 2
     31: ("부록", "Appendix"),                                 # 부록 3
+}
+
+# ── 투자제안서 (IR) 이미지 매핑 ────────────────────────
+IMAGE_MAP_IR = {
+    6: "infographics/concepts/ai-store-aisle-futuristic-brain-light.png",
+    8: "images/backgrounds/futuristic-retail-corridor-blue-wave.png",
+    10: "infographics/diagrams/platform-architecture-lcd-ai-engine.png",
+    11: "infographics/diagrams/business-evolution-timeline-hw-sw-ai.png",
+    21: "images/backgrounds/dark-blue-digital-circuit-pattern.jpg",
+    24: "images/people/gyeonggi-rndb-center-aerial-view.png",
+    # AI 생성 이미지 (생성 후 추가)
+    # 3: "infographics/ir/retail-crisis-disruption-abstract.png",
+    # 5: "infographics/ir/tam-sam-som-concentric-circles.png",
+    # 9: "infographics/ir/distributed-ai-3tier-architecture.png",
+    # 14: "infographics/ir/revenue-model-ascending-pyramid.png",
+    # 17: "infographics/ir/competitive-landscape-matrix.png",
+    # 20: "infographics/ir/fund-allocation-segments.png",
+    # 25: "infographics/ir/investment-growth-visualization.png",
+}
+
+# ── 투자제안서 (IR) 섹션 매핑 ──────────────────────────
+SECTION_MAP_IR = {
+    1: ("", ""),                                              # 표지
+    2: ("Executive Summary", "Executive Summary"),
+    3: ("Problem", "The Problem"),
+    4: ("시장 기회", "Market Opportunity"),
+    5: ("시장 기회", "TAM / SAM / SOM"),
+    6: ("Solution", "About AIsirius"),
+    7: ("Solution", "Core AI Technology"),
+    8: ("Solution", "Proprietary vs Generic AI"),
+    9: ("Solution", "Patented 3-Stage Distributed AI"),
+    10: ("Solution", "Retail Media Platform"),
+    11: ("Traction", "Milestones"),
+    12: ("Traction", "Walmart Case Study"),
+    13: ("Traction", "ESL Replacement Window"),
+    14: ("비즈니스", "Business Model"),
+    15: ("비즈니스", "Unit Economics"),
+    16: ("비즈니스", "ROI Analysis"),
+    17: ("비즈니스", "Competitive Landscape"),
+    18: ("Financials", "Revenue Roadmap"),
+    19: ("Financials", "P&L Projection"),
+    20: ("Financials", "Use of Funds"),
+    21: ("전략", "Global Strategy & Partnerships"),
+    22: ("전략", "Competitive Moat"),
+    23: ("전략", "Exit Strategy"),
+    24: ("팀", "CEO & Team"),
+    25: ("Investment", "The Ask"),
+    26: ("Investment", "Risk & Mitigation"),
+    27: ("", ""),                                              # 감사합니다
+    28: ("부록", "Appendix"),
 }
 
 
@@ -445,7 +496,7 @@ def _add_image_or_placeholder(slide, left, top, width, height,
     - 축소/확대 후 영역에 맞지 않으면 크롭
     """
     # 이미지 매핑 조회
-    image_map = IMAGE_MAP_A if version == "A" else IMAGE_MAP_B
+    image_map = {"A": IMAGE_MAP_A, "B": IMAGE_MAP_B, "IR": IMAGE_MAP_IR}[version]
     image_file = image_map.get(slide_number)
 
     if image_file:
@@ -1204,15 +1255,16 @@ def build_deck(version: str, overwrite: bool = False) -> str:
     """PPTX 빌드 실행.
 
     Args:
-        version: "A" 또는 "B"
+        version: "A", "B", 또는 "IR"
         overwrite: True면 최신 파일을 덮어쓰기 (오류 수정 시),
                    False면 새 순번 파일 생성 (내용/디자인 변경 시)
 
     Returns:
         출력 파일 경로
     """
-    # 템플릿 로드
-    template_path = os.path.join(TEMPLATES_DIR, f"aisirius_template_{version}.pptx")
+    # 템플릿 로드 (IR은 A 템플릿 기반)
+    tpl_key = "A" if version == "IR" else version
+    template_path = os.path.join(TEMPLATES_DIR, f"aisirius_template_{tpl_key}.pptx")
     if not os.path.exists(template_path):
         print(f"[WARNING] 템플릿 없음: {template_path}, 빈 프레젠테이션으로 생성")
         prs = Presentation()
@@ -1222,7 +1274,9 @@ def build_deck(version: str, overwrite: bool = False) -> str:
         prs = Presentation(template_path)
 
     # 콘텐츠 파싱
-    if version == "A":
+    if version == "IR":
+        content_path = os.path.join(CONTENT_DIR, "투자제안서_슬라이드_세부내용.md")
+    elif version == "A":
         content_path = os.path.join(CONTENT_DIR, "슬라이드_세부내용_VerA_비주얼.md")
     else:
         content_path = os.path.join(CONTENT_DIR, "슬라이드_세부내용_VerB_텍스트상세.md")
@@ -1230,7 +1284,7 @@ def build_deck(version: str, overwrite: bool = False) -> str:
     slides_content = parse_slides(content_path, version)
     print(f"[INFO] {len(slides_content)}장 슬라이드 파싱 완료: {os.path.basename(content_path)}")
 
-    section_map = SECTION_MAP_A if version == "A" else SECTION_MAP_B
+    section_map = {"A": SECTION_MAP_A, "B": SECTION_MAP_B, "IR": SECTION_MAP_IR}[version]
     total_slides = len(slides_content)
 
     # 슬라이드별 빌드
@@ -1268,14 +1322,21 @@ def build_deck(version: str, overwrite: bool = False) -> str:
 
         print(f"  [{sc.number:2d}/{total_slides}] {sc.title} ({sc.layout_type.value})")
 
-    # 저장 (버전 관리: Ver.A / Ver.B 별도 순번)
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    # 저장 (버전 관리: Ver.A / Ver.B / IR 별도 순번)
+    if version == "IR":
+        output_dir = os.path.join(PROJECT_ROOT, "output", "투자제안서")
+    else:
+        output_dir = OUTPUT_DIR
+    os.makedirs(output_dir, exist_ok=True)
     today = date.today().strftime("%Y%m%d")
-    prefix = f"AIsirius_회사소개서_Ver{version}_{today}"
+    if version == "IR":
+        prefix = f"AIsirius_투자제안서_{today}"
+    else:
+        prefix = f"AIsirius_회사소개서_Ver{version}_{today}"
 
     # 같은 날짜의 기존 파일 중 최대 순번 찾기
     existing = [
-        f for f in os.listdir(OUTPUT_DIR)
+        f for f in os.listdir(output_dir)
         if f.startswith(prefix) and f.endswith(".pptx")
     ]
     max_seq = 0
@@ -1291,14 +1352,14 @@ def build_deck(version: str, overwrite: bool = False) -> str:
     if overwrite and latest_file:
         # 오류 수정 모드: 최신 파일 덮어쓰기
         output_filename = latest_file
-        output_path = os.path.join(OUTPUT_DIR, output_filename)
+        output_path = os.path.join(output_dir, output_filename)
         prs.save(output_path)
         print(f"\n[OK] 덮어쓰기 완료: {output_path}")
     else:
         # 내용/디자인 변경 모드: 새 순번 파일 생성
         next_seq = max_seq + 1
         output_filename = f"{prefix}_{next_seq:02d}.pptx"
-        output_path = os.path.join(OUTPUT_DIR, output_filename)
+        output_path = os.path.join(output_dir, output_filename)
         prs.save(output_path)
         print(f"\n[OK] 저장 완료: {output_path}")
         print(f"     (기존 파일 {len(existing)}개 보존됨)")
@@ -1307,8 +1368,8 @@ def build_deck(version: str, overwrite: bool = False) -> str:
 
 def main():
     parser = argparse.ArgumentParser(description="AIsirius PPTX Builder")
-    parser.add_argument("--version", choices=["A", "B", "all"], default="all",
-                        help="빌드 버전 (A=비주얼, B=텍스트상세, all=둘 다)")
+    parser.add_argument("--version", choices=["A", "B", "IR", "all"], default="all",
+                        help="빌드 버전 (A=비주얼, B=텍스트상세, IR=투자제안서, all=A+B)")
     parser.add_argument("--watermark", action="store_true",
                         help="워터마크 + PDF 변환 실행")
     parser.add_argument("--company", default="",
@@ -1329,7 +1390,8 @@ def main():
 
     for ver in versions:
         print(f"\n{'─' * 50}")
-        print(f"  Version {ver} 빌드 시작")
+        ver_label = "투자제안서" if ver == "IR" else f"Version {ver}"
+        print(f"  {ver_label} 빌드 시작")
         print(f"{'─' * 50}")
         output_path = build_deck(ver, overwrite=args.overwrite)
 

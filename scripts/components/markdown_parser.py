@@ -2,8 +2,9 @@
 
 Version A: `슬라이드_세부내용_VerA_비주얼.md`
 Version B: `슬라이드_세부내용_VerB_텍스트상세.md`
+Version IR: `투자제안서_슬라이드_세부내용.md`
 
-두 파일 모두 `## Slide N. Title` 패턴으로 슬라이드를 구분한다.
+모든 파일은 `## Slide N. Title` 패턴으로 슬라이드를 구분한다.
 """
 import re
 from dataclasses import dataclass, field
@@ -130,6 +131,61 @@ def _infer_layout_type_b(header: str, title: str, body: str) -> LayoutType:
     return LayoutType.TEXT_HEAVY_BULLETS
 
 
+def _infer_layout_type_ir(hint: str, title: str) -> LayoutType:
+    """Version IR용 LayoutType 추론 (레이아웃 힌트 기반).
+
+    IR 마크다운은 **레이아웃**: 키를 사용하므로 hint 우선 매칭.
+    "3단 분산 AI" 같은 제목과 "3-pillar" 레이아웃을 구분하기 위해
+    일부 키워드는 hint에서만 검색한다.
+    """
+    hint_lower = hint.lower()
+    combined = f"{hint} {title}".lower()
+
+    # 1. 표지 / 감사
+    if "표지" in combined or "investment proposal" in combined:
+        return LayoutType.TITLE_COVER
+    if "감사" in combined or "중앙 정렬" in combined:
+        return LayoutType.THANK_YOU
+
+    # 2. 텍스트 중심 (불릿)
+    if "텍스트 중심" in combined:
+        return LayoutType.TEXT_HEAVY_BULLETS
+
+    # 3. 텍스트+테이블 / 테이블 중심 → TEXT_HEAVY_TABLE
+    if "텍스트+테이블" in combined or "테이블 중심" in combined:
+        return LayoutType.TEXT_HEAVY_TABLE
+
+    # 4. 비교/대비 테이블 → COMPARISON_TABLE
+    if "비교" in combined or "대비" in combined:
+        return LayoutType.COMPARISON_TABLE
+
+    # 5. 차트 / 그래프 / J-Curve
+    if "그래프" in combined or "차트" in combined or "j-curve" in combined:
+        return LayoutType.CHART_SLIDE
+
+    # 6. 3-pillar (hint만 검사 — 제목의 "3단 분산"과 혼동 방지)
+    if "3-pillar" in hint_lower or "3단" in hint_lower:
+        return LayoutType.THREE_PILLAR
+
+    # 7. 타임라인
+    if "타임라인" in combined:
+        return LayoutType.TIMELINE
+
+    # 8. 좌측/좌우 → TWO_COLUMN (인포그래픽보다 우선 — "좌측+우측 인포그래픽" 대응)
+    if "좌측" in combined or "좌우" in combined:
+        return LayoutType.TWO_COLUMN
+
+    # 9. 인포그래픽
+    if "인포그래픽" in combined:
+        return LayoutType.INFOGRAPHIC_NUMBERS
+
+    # 10. 전면 배경
+    if "전면 배경" in combined:
+        return LayoutType.FULL_BLEED_IMAGE
+
+    return LayoutType.GENERIC
+
+
 def _detect_chart_keys(text: str) -> list:
     """텍스트에서 차트 데이터 키 감지."""
     keys = []
@@ -176,7 +232,7 @@ def parse_slides(filepath: str, version: str = "A") -> list:
 
     Args:
         filepath: 마크다운 파일 경로
-        version: "A" 또는 "B"
+        version: "A", "B", 또는 "IR"
 
     Returns:
         list[SlideContent]
@@ -278,6 +334,8 @@ def parse_slides(filepath: str, version: str = "A") -> list:
         # 레이아웃 타입 추론
         if version == "A":
             sc.layout_type = _infer_layout_type(sc.layout_hint, title)
+        elif version == "IR":
+            sc.layout_type = _infer_layout_type_ir(sc.layout_hint, title)
         else:
             sc.layout_type = _infer_layout_type_b(
                 sc.section_english, title, raw
