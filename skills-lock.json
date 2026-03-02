@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "skills": {
+    "graphic-designer": {
+      "source": "thepexcel/agent-skills",
+      "sourceType": "github",
+      "computedHash": "27aacb5887c1da9fc8b75d1ffdab39393dbaa4cae01da86409ebf0fe25b1f563"
+    },
+    "pptx": {
+      "source": "rysweet/amplihack",
+      "sourceType": "github",
+      "computedHash": "63e88d53774b7458d0a03aa2bb9387b2ec15d58950f86de4b2a3f89f7bbc561e"
+    },
+    "presentation-design": {
+      "source": "jwynia/agent-skills",
+      "sourceType": "github",
+      "computedHash": "cc83e20ff7b7df6ada2eada0a92843fe0e726cdffd40a8fd3297de3a8678be6e"
+    }
+  }
+}
